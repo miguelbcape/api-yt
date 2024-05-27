@@ -10,12 +10,7 @@ import { connectMongo } from './libs/database.js';
 const app = express();
 connectMongo();
 
-app.use(
-  cors({
-    credentials: true,
-    origin: 'http://localhost:3001',
-  })
-);
+app.use(cors());
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
