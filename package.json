@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "antibotbrowser": "^1.0.5",
     "axios": "1.6.8",
     "bcrypt": "5.1.1",
     "cookie-parser": "1.4.6",
@@ -20,7 +21,6 @@
     "express": "4.19.2",
     "jsonwebtoken": "9.0.2",
     "mongoose": "8.3.4",
-    "puppeteer": "22.8.1",
     "redis": "4.6.13",
     "youtube-stream-url": "2.4.3",
     "yt-api-search": "1.0.0",

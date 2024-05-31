@@ -1,62 +1,51 @@
-import puppeteer from 'puppeteer';
-import idYT from '../models/idyt.model.js';
 import { CONVERT_URL, TIME_CONVERT } from '../libs/config.js';
-import { convertError, convertSuccess} from '../libs/functions.js';
+import { convertError } from '../libs/functions.js';
 import { connectRedis } from '../libs/database.js';
 
 export const convertApi = async (req, res) => {
-  const { id } = req.query;
-  const error = convertError('error converting');
-  const errorDb = (message) => convertError(message);
-  
-  if(!id) return res.json(error);
+  const { id, format } = req.query;
 
-  const idFound = await idYT.findOne({ id_yt: id });
-  if (idFound) return res.json(errorDb(idFound.option));
+  const error = convertError('error converting');
+
+  if (!id || !format) return res.json(error);
 
   try {
     const client = await connectRedis();
 
     // read cache
-    const cacheName = `download_${id}`;
+    const cacheName = `download_${format}_${id}`;
     const value = await client.get(cacheName);
     if (value) return res.json(JSON.parse(value));
     // read cache
 
-    const browser = await puppeteer.launch({
-      args: ["--no-sandbox"],
-    });
-    const page = await browser.newPage();
-    await page.goto(CONVERT_URL);
-    await page.type("#url", `https://www.youtube.com/watch?v=${id}`);
-    await page.click('input[type="submit"]');
-    await page.waitForSelector("form div:nth-of-type(2) a");
-  
-    // Obtiene el titulo del video
-    const titleId = await page.evaluate(() => {
-      const title = document.querySelector("form div:nth-of-type(1)");
-      return title.textContent;
-    });
-  
-    // Obtiene el atributo href del enlace
-    const downloadLink = await page.evaluate(() => {
-      const link = document.querySelector("form div:nth-of-type(2) a");
-      return link.href;
+    const response = await fetch(CONVERT_URL, {
+      cache: 'no-cache',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        accept: '*/*',
+        'User-Agent':
+          'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+        Origin: 'https://youtubetomp3.sc/',
+        Referer: 'https://youtubetomp3.sc/',
+      },
+      body: `link=https://www.youtube.com/watch?v=${id}&format=${format}`,
     });
 
-    await browser.close();
+    if (!response.ok) {
+      return res.json(error);
+    }
 
-    const result = convertSuccess(titleId, downloadLink);
+    const data = await response.json();
 
     // insert cache
-    const payload = JSON.stringify(result);
+    const payload = JSON.stringify(data);
     await client.set(cacheName, payload);
     await client.expire(cacheName, TIME_CONVERT);
     // insert cache
 
-    return res.json(result);
+    res.json(data);
   } catch (err) {
-    console.log(err);
     return res.json(error);
   }
 };

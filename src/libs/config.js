@@ -1,6 +1,6 @@
 export const PORT = 3000;
 export const TIME_SEARCH = 120; // 2 minutos
-export const TIME_CONVERT = 1200; // 20 minutos
+export const TIME_CONVERT = 300; // 5 minutos
 export const CONVERT_URL = process.env.CONVERT_URL;
 
 export const ROOT_URL = process.env.ROOT_URL;
